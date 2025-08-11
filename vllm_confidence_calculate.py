@@ -64,7 +64,7 @@ def set_seeds(seed=42):
 def parse_args():
     parser = argparse.ArgumentParser()
     # 模型与数据路径
-    parser.add_argument('--model_name_or_path', type=str, default='/root/.cache/modelscope/hub/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B')
+    parser.add_argument('--model_name_or_path', type=str, default='DeepSeek-R1-Distill-Qwen-1.5B')
     parser.add_argument('--dataset_dir', type=str, default="./Data/")
     parser.add_argument('--output_path', type=str, default='./outputs')
     parser.add_argument('--dataset', type=str, default='Math_Math500')
@@ -235,3 +235,4 @@ if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)
     os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
     main()
+
