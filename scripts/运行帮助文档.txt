@@ -1,0 +1,84 @@
+##------------Baseline运行（vllm）--------------------##
+CUDA_VISIBLE_DEVICES=0 python vllm_main.py\
+    --model_name_or_path 'DeepSeek-R1-Distill-Qwen-7B' \
+    --dataset_dir "./Data/" \
+    --output_path "./outputs" \
+    --dataset "Math_Math500" \
+    --max_generated_tokens 10000 \
+    --batch_size 2000 \
+    --dtype bfloat16 \
+    --method original \
+    --gpu_memory_utilization 0.9
+
+##----------Baseline运行(vllm)但是添加了sentence-level的信心计算（推理完成后进行的计算，不影响推理）---
+CUDA_VISIBLE_DEVICES=0,1 python vllm_confidence_calculate.py\
+    --model_name_or_path 'DeepSeek-R1-Distill-Qwen-7B' \
+    --dataset_dir "./Data/" \
+    --output_path "./outputs" \
+    --dataset "Math_Math500" \
+    --max_generated_tokens 16000 \
+    --batch_size 2000 \
+    --dtype bfloat16 \
+    --gpu_memory_utilization 0.9
+
+
+
+##----------Baseline运行(transformer版)(Data Parallel)-------------------
+##包含了隐藏层的存储，会存在output_path里面去-------------------------##
+python transformer_inference_dp.py \
+  --model_name_or_path 'DeepSeek-R1-Distill-Qwen-7B' \
+  --dataset_dir "./Data/" \
+  --output_path "./outputs" \
+  --dataset "Math_Math500" \
+  --max_generated_tokens 10000 \
+  --num_gpus 2
+
+##---------前提是，完成一次完整的推理，有hidden文件，json文件##
+##----------提取steer向量-----------------------------##
+python hidden_analysis.py \
+  --layer_id 22 \
+  --jsonl_path ./outputs/DeepSeek-R1-Distill-Qwen-7B/Math_Math500/origin_temp0.7_maxlen16000.jsonl \
+  --hidden_dir ./outputs/DeepSeek-R1-Distill-Qwen-7B/Math_Math500/ \
+  --save_path ./outputs/DeepSeek-R1-Distill-Qwen-7B/steer_vector_layer22.pt \
+  --max_files 500 
+
+
+
+##----------静态steer运行(Data Parallel)-----------------
+python transformer_inference_steer_dp.py \
+    --model_name_or_path 'DeepSeek-R1-Distill-Qwen-7B' \
+    --dataset_dir "./Data/" \
+    --output_path "./outputs_steer" \
+    --dataset "Math_Math500" \
+    --max_generated_tokens 10000 \
+    --num_gpus 2 \
+    --steer_vector_path ./outputs/DeepSeek-R1-Distill-Qwen-7B/steer_vector_layer22.pt \
+    --steer_layer 22 \
+    --steer_coef -1
+
+
+##----------合并数据并行的结果文件----------
+python merge_shards.py \
+  --dir ./outputs_steer_confi/DeepSeek-R1-Distill-Qwen-7B/Math_Math500 \
+  --base 'steer_temp0.7_maxlen10000'
+
+
+##--------------------评估---------------------
+python check.py \
+    --model_name_or_path 'DeepSeek-R1-Distill-Qwen-7B' \
+    --data_name "Math_Math500" \
+    --generation_path "./outputs_steer/DeepSeek-R1-Distill-Qwen-7B/Math_Math500/steer_temp0.7_maxlen10000.merged.jsonl"
+
+
+##------------其他方法（NoWait）-------------
+python transformer_inference_nowait_dp.py \
+  --model_name_or_path 'DeepSeek-R1-Distill-Qwen-7B' \
+  --dataset_dir "./Data/" \
+  --output_path "./outputs_nowait" \
+  --dataset "Math_Math500" \
+  --max_generated_tokens 10000 \
+  --num_gpus 2
+
+
+
+  
