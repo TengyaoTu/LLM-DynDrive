@@ -64,7 +64,7 @@ def set_seeds(seed=42):
 def parse_args():
     parser = argparse.ArgumentParser()
     # 模型与数据路径
-    parser.add_argument('--model_name_or_path', type=str, default='/root/.cache/modelscope/hub/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B')
+    parser.add_argument('--model_name_or_path', type=str, default='DeepSeek-R1-Distill-Qwen-1.5B')
     parser.add_argument('--dataset_dir', type=str, default="./Data/")
     parser.add_argument('--output_path', type=str, default='./outputs')
     parser.add_argument('--dataset', type=str, default='Math_Math500')
@@ -95,13 +95,6 @@ def main():
     print(f"Max total generated tokens: {args.max_len}")
     print("\nInitializing vLLM LLM engine...")
     available_gpus = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    # 模型下载
-    from modelscope import snapshot_download
-
-    # 下载模型（你也可以修改成别的模型名）
-    #model_dir='/root/.cache/modelscope/hub/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B'
-    #model_dir='/root/.cache/modelscope/hub/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B'
-    model_dir = snapshot_download('deepseek-ai/DeepSeek-R1-Distill-Qwen-7B')
     try:
         llm_engine = LLM(
             model=args.model_name_or_path,
@@ -201,5 +194,6 @@ if __name__ == "__main__":
     # 读取原始 JSON 文件（包含一个 list of dicts）
     set_seeds(42)
     main()
+
 
 
